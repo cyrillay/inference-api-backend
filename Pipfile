@@ -39,7 +39,7 @@ Keras-Applications = "==1.0.8"
 Keras-Preprocessing = "==1.1.0"
 Markdown = "==3.1.1"
 MarkupSafe = "==1.1.1"
-Pillow = "==6.0.0"
+Pillow = "==6.2.0"
 PyYAML = "==5.1.1"
 Werkzeug = "==0.15.4"
 
