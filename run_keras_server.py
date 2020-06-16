@@ -1,3 +1,4 @@
+from flask import send_file
 from keras.applications.resnet_v2 import ResNet50V2
 from keras.applications.resnet import ResNet50
 from keras.preprocessing.image import img_to_array
@@ -11,24 +12,35 @@ import io
 import tensorflow as tf
 from flask_cors import CORS
 
+import semantic_segmentation
+
+# TODO : Huge refactor since there are now two models
+
 app = flask.Flask(__name__)
 CORS(app)
 session = None
 graph = None
-model = None
+
+classification_model = None
+segmentation_model = None
 
 
-def load_model():
-    global model
+def load_classification_model():
+    global classification_model
     global graph
     global session
     session = get_session()
     init = tf.global_variables_initializer()
     session.run(init)
     graph = tf.get_default_graph()
-    model = ResNet50(weights="imagenet")
+    classification_model = ResNet50(weights="imagenet")
     # https://github.com/keras-team/keras/issues/6124
-    model._make_predict_function()
+    classification_model._make_predict_function()
+
+
+def load_segmentation_model():
+    global segmentation_model
+    segmentation_model = semantic_segmentation.load_model()
 
 
 def prepare_image(image, target):
@@ -45,6 +57,19 @@ def prepare_image(image, target):
 @app.route("/test", methods=["GET"])
 def testing():
     return flask.jsonify("Hello !")
+
+
+@app.route("/predict/object-detection", methods=["POST"])
+def predict_objects():
+    """
+    Usage : `curl -X POST -F image=@YOUR_IMAGE.JPG http://0.0.0.0:5000/predict/object-detection > res.png`
+    """
+    print(f"Received {len(flask.request.files)} files.")
+    if flask.request.files.get("image"):
+        image = flask.request.files["image"].read()
+        image = Image.open(io.BytesIO(image))
+        semantic_segmentation.predict(segmentation_model, image)
+    return send_file('segmented.png', mimetype='image/png')
 
 
 @app.route("/predict", methods=["POST"])
@@ -64,10 +89,10 @@ def predict():
             processed_image = prepare_image(image, target=(224, 224))
             with graph.as_default():
                 set_session(session)
-                preds = model.predict(processed_image)
+                preds = classification_model.predict(processed_image)
             results = imagenet_utils.decode_predictions(preds)
             for (_, label, prob) in results[0]:
-                r = {"label": label, "probability": float(prob)}
+                r = {"label": label, "probability": f"{prob:.0%}"}
                 data["predictions"].append(r)
             data["success"] = True
     response = flask.jsonify(data)
@@ -77,5 +102,6 @@ def predict():
 
 if __name__ == "__main__":
     print("Loading Keras model starting Flask server...")
-    load_model()
+    # load_classification_model()
+    load_segmentation_model()
     app.run(host="0.0.0.0")
