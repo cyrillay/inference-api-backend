@@ -1,5 +1,4 @@
 from flask import send_file
-from keras.applications.resnet_v2 import ResNet50V2
 from keras.applications.resnet import ResNet50
 from keras.preprocessing.image import img_to_array
 from keras.applications import imagenet_utils
@@ -12,9 +11,9 @@ import io
 import tensorflow as tf
 from flask_cors import CORS
 
-import semantic_segmentation
+from src import semantic_segmentation
 
-# TODO : Huge refactor since there are now two models
+# TODO : Refactor since there are now multiple models
 
 app = flask.Flask(__name__)
 CORS(app)
