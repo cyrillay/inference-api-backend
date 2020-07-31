@@ -103,4 +103,4 @@ if __name__ == "__main__":
     print("Loading Keras model starting Flask server...")
     load_classification_model()
     load_segmentation_model()
-    app.run(host="0.0.0.0")
+    app.run(host="0.0.0.0", port=5001)
