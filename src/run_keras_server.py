@@ -68,7 +68,7 @@ def predict_objects():
         image = flask.request.files["image"].read()
         image = Image.open(io.BytesIO(image))
         semantic_segmentation.predict(segmentation_model, image)
-    return send_file('segmented.png', mimetype='image/png')
+    return send_file('../segmented.png', mimetype='image/png')
 
 
 @app.route("/predict", methods=["POST"])
