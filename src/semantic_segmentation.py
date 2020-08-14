@@ -2,6 +2,8 @@ import os
 from io import BytesIO
 import tarfile
 import tempfile
+
+from matplotlib.pyplot import close
 from six.moves import urllib
 
 from matplotlib import gridspec
@@ -133,6 +135,7 @@ def save_segmentation_view(image, seg_map, output_path='./segmented.png'):
     # ax.tick_params(width=0.0)
     plt.grid('off')
     plt.savefig(output_path)
+    close()
 
 
 LABEL_NAMES = np.asarray([
