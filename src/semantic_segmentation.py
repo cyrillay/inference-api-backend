@@ -36,7 +36,7 @@ class DeepLabModel(object):
         for tar_info in tar_file.getmembers():
             if self.FROZEN_GRAPH_NAME in os.path.basename(tar_info.name):
                 file_handle = tar_file.extractfile(tar_info)
-                graph_def = tf.GraphDef.FromString(file_handle.read())
+                graph_def = tf.compat.v1.GraphDef.FromString(file_handle.read())
                 break
 
         tar_file.close()
@@ -47,7 +47,7 @@ class DeepLabModel(object):
         with self.graph.as_default():
             tf.import_graph_def(graph_def, name='')
 
-        self.sess = tf.Session(graph=self.graph)
+        self.sess = tf.compat.v1.Session(graph=self.graph)
 
     def run(self, image):
         """Runs inference on a single image.
@@ -62,7 +62,7 @@ class DeepLabModel(object):
         width, height = image.size
         resize_ratio = 1.0 * self.INPUT_SIZE / max(width, height)
         target_size = (int(resize_ratio * width), int(resize_ratio * height))
-        resized_image = image.convert('RGB').resize(target_size, Image.ANTIALIAS)
+        resized_image = image.convert('RGB').resize(target_size, Image.LANCZOS)
         batch_seg_map = self.sess.run(
             self.OUTPUT_TENSOR_NAME,
             feed_dict={self.INPUT_TENSOR_NAME: [np.asarray(resized_image)]})
@@ -165,7 +165,7 @@ def load_model():
     _TARBALL_NAME = 'deeplab_model.tar.gz'
 
     model_dir = tempfile.mkdtemp()
-    tf.gfile.MakeDirs(model_dir)
+    tf.io.gfile.makedirs(model_dir)
 
     download_path = os.path.join(model_dir, _TARBALL_NAME)
     print('downloading model, this might take a while...')

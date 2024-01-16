@@ -2,8 +2,6 @@ from flask import send_file
 from keras.applications.resnet import ResNet50
 from keras.preprocessing.image import img_to_array
 from keras.applications import imagenet_utils
-from tensorflow.python.keras.backend import set_session
-from keras.backend import get_session
 from PIL import Image
 import numpy as np
 import flask
@@ -11,7 +9,7 @@ import io
 import tensorflow as tf
 from flask_cors import CORS
 
-from src import semantic_segmentation
+import semantic_segmentation
 
 # TODO : Refactor since there are now multiple models
 
@@ -26,15 +24,15 @@ segmentation_model = None
 
 def load_classification_model():
     global classification_model
-    global graph
-    global session
-    session = get_session()
-    init = tf.global_variables_initializer()
-    session.run(init)
-    graph = tf.get_default_graph()
+    # global graph
+    # global session
+    # session = get_session()
+    # init = tf.compat.v1.global_variables_initializer()
+    # session.run(init)
+    # graph = tf.compat.v1.get_default_graph()
     classification_model = ResNet50(weights="imagenet")
     # https://github.com/keras-team/keras/issues/6124
-    classification_model._make_predict_function()
+    # classification_model._make_predict_function()
 
 
 def load_segmentation_model():
@@ -68,7 +66,9 @@ def predict_objects():
         image = flask.request.files["image"].read()
         image = Image.open(io.BytesIO(image))
         semantic_segmentation.predict(segmentation_model, image)
-    return send_file('../segmented.png', mimetype='image/png')
+    else:
+        flask.jsonify({"error": "No image file"})
+    return send_file('./segmented.png', mimetype='image/png')
 
 
 @app.route("/predict", methods=["POST"])
@@ -86,9 +86,7 @@ def predict():
             image = flask.request.files["image"].read()
             image = Image.open(io.BytesIO(image))
             processed_image = prepare_image(image, target=(224, 224))
-            with graph.as_default():
-                set_session(session)
-                preds = classification_model.predict(processed_image)
+            preds = classification_model.predict(processed_image)
             results = imagenet_utils.decode_predictions(preds)
             for (_, label, prob) in results[0]:
                 r = {"label": label, "probability": f"{prob:.0%}"}
