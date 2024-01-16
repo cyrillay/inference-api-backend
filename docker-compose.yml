@@ -9,7 +9,7 @@ services:
       - ./nginx.conf:/etc/nginx/nginx.conf:ro
       - ./ssl:/etc/nginx/ssl:ro
     depends_on:
-      - your_service
+      - inference-api-backend
 
   inference-api-backend:
     image: lays:python-app
